@@ -66,6 +66,8 @@ Deno.serve(async (req) => {
       findings = []
     }
 
+    findings = findings.map(f => ({ ...f, id: crypto.randomUUID() }))
+
     return new Response(
       JSON.stringify({ findings, scan_duration_ms }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },

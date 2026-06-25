@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase.js'
 import { getOrCreateSessionId } from '../lib/session.js'
 import { parseGitHubUrl, fetchFileContent, buildMultiFileCode } from '../lib/github.js'
-import { LANGUAGE_OPTIONS, SEVERITY_ORDER } from '../lib/constants.js'
+import { LANGUAGE_OPTIONS } from '../lib/constants.js'
 import ScanBeam from '../components/ScanBeam.jsx'
 import FileSelector from '../components/FileSelector.jsx'
 
@@ -52,12 +52,14 @@ export default function ScanPage() {
       } else {
         if (!repoInfo) throw new Error('Enter a valid GitHub repo URL.')
         if (!selectedFiles.length) throw new Error('Select at least one file.')
-        const fileContents = await Promise.all(
+        const results = await Promise.allSettled(
           selectedFiles.map(async f => ({
             path: f.path,
             content: await fetchFileContent(repoInfo.owner, repoInfo.repo, f.path),
           }))
         )
+        const fileContents = results.filter(r => r.status === 'fulfilled').map(r => r.value)
+        if (!fileContents.length) throw new Error('Could not fetch any files from this repository.')
         codeToScan = buildMultiFileCode(fileContents).slice(0, 50000)
         inputLabel = `${repoInfo.owner}/${repoInfo.repo}`
       }
