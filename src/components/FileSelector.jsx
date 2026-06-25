@@ -12,7 +12,8 @@ export default function FileSelector({ owner, repo, onFilesChange }) {
     setLoading(true)
     setError(null)
     fetchRepoFiles(owner, repo)
-      .then(f => {
+      .then(allFiles => {
+        const f = allFiles.slice(0, 15)
         setFiles(f)
         const allPaths = new Set(f.map(x => x.path))
         setSelected(allPaths)
@@ -26,10 +27,13 @@ export default function FileSelector({ owner, repo, onFilesChange }) {
     setSelected(prev => {
       const next = new Set(prev)
       next.has(path) ? next.delete(path) : next.add(path)
-      onFilesChange(files.filter(f => next.has(f.path)))
       return next
     })
   }
+
+  useEffect(() => {
+    onFilesChange(files.filter(f => selected.has(f.path)))
+  }, [selected])
 
   if (loading) return <p style={{ color: 'var(--color-muted)', fontFamily: 'var(--font-code)', fontSize: '0.8rem' }}>Fetching files…</p>
   if (error) return <p style={{ color: 'var(--color-critical)', fontSize: '0.85rem' }}>Error: {error}</p>
