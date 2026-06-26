@@ -32,59 +32,90 @@ export default function HistoryPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', padding: '2rem' }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+    <div style={{ minHeight: '100vh', padding: '1.75rem 2.5rem' }}>
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '1.75rem' }}>
         <div>
-          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: 700 }}>
-            <span style={{ color: 'var(--color-primary)' }}>Vuln</span>Scan History
+          <h1 style={{
+            fontFamily: 'var(--font-display)',
+            fontSize: '1.25rem',
+            fontWeight: 700,
+            letterSpacing: '-0.02em',
+            marginBottom: '0.3rem',
+          }}>
+            <span style={{ color: 'var(--color-accent)' }}>Vuln</span>Scan
+            <span style={{ color: 'var(--color-muted)', fontWeight: 400, fontSize: '1rem', marginLeft: '0.6rem' }}>/ history</span>
           </h1>
-          <p style={{ color: 'var(--color-muted)', fontSize: '0.85rem', marginTop: '0.25rem' }}>
-            This session's scans — stored anonymously in your browser
+          <p style={{ fontFamily: 'var(--font-code)', fontSize: '0.68rem', color: 'var(--color-muted)', letterSpacing: '0.04em' }}>
+            Session-scoped · stored locally
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
           <button
             onClick={() => navigate('/')}
-            style={{ color: 'var(--color-muted)', fontWeight: 600, fontSize: '0.85rem' }}
+            style={{ fontFamily: 'var(--font-code)', fontSize: '0.72rem', color: 'var(--color-muted)', letterSpacing: '0.04em' }}
           >
-            ← New Scan
+            ← new scan
           </button>
           {scans.length > 0 && (
             <button
               onClick={clearHistory}
               disabled={clearing}
               style={{
-                padding: '0.4rem 0.9rem',
-                borderRadius: '6px',
+                fontFamily: 'var(--font-code)',
+                fontSize: '0.72rem',
+                padding: '0.35rem 0.75rem',
+                borderRadius: '3px',
                 background: 'transparent',
                 border: '1px solid var(--color-critical)',
                 color: 'var(--color-critical)',
-                fontWeight: 600,
-                fontSize: '0.82rem',
+                letterSpacing: '0.04em',
+                opacity: clearing ? 0.5 : 1,
               }}
             >
-              {clearing ? 'Clearing…' : 'Clear History'}
+              {clearing ? 'clearing...' : 'clear history'}
             </button>
           )}
         </div>
       </header>
 
       {loading ? (
-        <p style={{ color: 'var(--color-muted)' }}>Loading…</p>
+        <p style={{ fontFamily: 'var(--font-code)', fontSize: '0.75rem', color: 'var(--color-muted)', letterSpacing: '0.04em' }}>
+          loading...
+        </p>
       ) : scans.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--color-muted)' }}>
-          <p style={{ fontSize: '1rem', marginBottom: '0.75rem' }}>No scans yet</p>
-          <button onClick={() => navigate('/')} style={{ color: 'var(--color-primary)', fontWeight: 600 }}>
-            Run your first scan →
+        <div style={{
+          textAlign: 'center',
+          padding: '5rem 2rem',
+          background: 'var(--color-card)',
+          border: '1px solid var(--color-border)',
+          borderRadius: '4px',
+        }}>
+          <p style={{ fontFamily: 'var(--font-code)', fontSize: '0.72rem', color: 'var(--color-muted)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '0.75rem' }}>
+            No scans yet
+          </p>
+          <button
+            onClick={() => navigate('/')}
+            style={{ fontFamily: 'var(--font-code)', fontSize: '0.75rem', color: 'var(--color-accent)', letterSpacing: '0.04em' }}
+          >
+            run your first scan →
           </button>
         </div>
       ) : (
-        <div style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: '10px', overflow: 'hidden' }}>
+        <div style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: '4px', overflow: 'hidden' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--color-border)' }}>
-                {['Target', 'Scanned At', 'Findings', ''].map(h => (
-                  <th key={h} style={{ padding: '0.75rem 1rem', textAlign: 'left', fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                {['Target', 'Scanned', 'Findings', ''].map(h => (
+                  <th key={h} style={{
+                    padding: '0.625rem 1rem',
+                    textAlign: 'left',
+                    fontFamily: 'var(--font-code)',
+                    fontSize: '0.62rem',
+                    fontWeight: 600,
+                    color: 'var(--color-muted)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.07em',
+                  }}>
                     {h}
                   </th>
                 ))}

@@ -6,6 +6,13 @@ import SeveritySummary from '../components/SeveritySummary.jsx'
 import FindingCard from '../components/FindingCard.jsx'
 import CodePanel from '../components/CodePanel.jsx'
 
+const panel = {
+  background: 'var(--color-card)',
+  border: '1px solid var(--color-border)',
+  borderRadius: '4px',
+  overflow: 'hidden',
+}
+
 export default function ResultsPage() {
   const { scanId } = useParams()
   const navigate = useNavigate()
@@ -26,15 +33,24 @@ export default function ResultsPage() {
   }, [scanId])
 
   if (loading) return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-muted)' }}>
-      Loading scan…
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <span style={{ fontFamily: 'var(--font-code)', fontSize: '0.78rem', color: 'var(--color-muted)', letterSpacing: '0.08em' }}>
+        loading...
+      </span>
     </div>
   )
 
   if (error || !scan) return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1rem' }}>
-      <p style={{ color: 'var(--color-critical)' }}>{error || 'Scan not found.'}</p>
-      <button onClick={() => navigate('/')} style={{ color: 'var(--color-primary)', fontWeight: 600 }}>← New Scan</button>
+      <p style={{ fontFamily: 'var(--font-code)', fontSize: '0.78rem', color: 'var(--color-critical)' }}>
+        ✕ {error || 'Scan not found.'}
+      </p>
+      <button
+        onClick={() => navigate('/')}
+        style={{ fontFamily: 'var(--font-code)', fontSize: '0.75rem', color: 'var(--color-accent)', letterSpacing: '0.04em' }}
+      >
+        ← new scan
+      </button>
     </div>
   )
 
@@ -42,68 +58,103 @@ export default function ResultsPage() {
     SEVERITY_ORDER.indexOf(a.severity) - SEVERITY_ORDER.indexOf(b.severity)
   )
 
-  const highlightColor = selectedFinding ? SEVERITY_COLORS[selectedFinding.severity] : '#2563EB'
+  const highlightColor = selectedFinding ? SEVERITY_COLORS[selectedFinding.severity] : 'var(--color-accent)'
   const highlightLines = selectedFinding?.affected_lines || []
 
-  const panelStyle = {
-    background: 'var(--color-card)',
-    border: '1px solid var(--color-border)',
-    borderRadius: '10px',
-    overflow: 'hidden',
-  }
-
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', padding: '2rem' }}>
-      <header style={{ marginBottom: '1.5rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
-          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: 700 }}>
-            <span style={{ color: 'var(--color-primary)' }}>Vuln</span>Scan Results
-          </h1>
-          <div style={{ display: 'flex', gap: '0.75rem' }}>
-            <button onClick={() => navigate('/')} style={{ color: 'var(--color-muted)', fontSize: '0.85rem', fontWeight: 600 }}>
-              ← New Scan
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', padding: '1.75rem 2.5rem' }}>
+      {/* Header */}
+      <header style={{ marginBottom: '1.25rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.875rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <h1 style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: '1.25rem',
+              fontWeight: 700,
+              letterSpacing: '-0.02em',
+            }}>
+              <span style={{ color: 'var(--color-accent)' }}>Vuln</span>Scan
+            </h1>
+            <span style={{
+              fontFamily: 'var(--font-code)',
+              fontSize: '0.65rem',
+              color: 'var(--color-muted)',
+              letterSpacing: '0.06em',
+              textTransform: 'uppercase',
+              paddingLeft: '1rem',
+              borderLeft: '1px solid var(--color-border)',
+            }}>
+              Results
+            </span>
+          </div>
+          <div style={{ display: 'flex', gap: '1.5rem' }}>
+            <button
+              onClick={() => navigate('/')}
+              style={{ fontFamily: 'var(--font-code)', fontSize: '0.72rem', color: 'var(--color-muted)', letterSpacing: '0.04em' }}
+            >
+              ← new scan
             </button>
-            <button onClick={() => navigate('/history')} style={{ color: 'var(--color-muted)', fontSize: '0.85rem', fontWeight: 600 }}>
-              History
+            <button
+              onClick={() => navigate('/history')}
+              style={{ fontFamily: 'var(--font-code)', fontSize: '0.72rem', color: 'var(--color-muted)', letterSpacing: '0.04em' }}
+            >
+              history
             </button>
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-          <span style={{ fontFamily: 'var(--font-code)', fontSize: '0.82rem', color: 'var(--color-muted)' }}>
+        {/* Scan metadata bar */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '1.5rem',
+          flexWrap: 'wrap',
+          padding: '0.625rem 0.875rem',
+          background: 'var(--color-card)',
+          border: '1px solid var(--color-border)',
+          borderRadius: '3px',
+        }}>
+          <span style={{ fontFamily: 'var(--font-code)', fontSize: '0.75rem', color: 'var(--color-text)' }}>
             {scan.input_label}
           </span>
-          <span style={{ color: 'var(--color-border)' }}>|</span>
-          <span style={{ fontSize: '0.82rem', color: 'var(--color-muted)' }}>
+          <span style={{ color: 'var(--color-border)' }}>·</span>
+          <span style={{ fontFamily: 'var(--font-code)', fontSize: '0.7rem', color: 'var(--color-muted)' }}>
             {new Date(scan.created_at).toLocaleString()}
           </span>
           {scan.scan_duration_ms && (
             <>
-              <span style={{ color: 'var(--color-border)' }}>|</span>
-              <span style={{ fontSize: '0.82rem', color: 'var(--color-muted)' }}>
+              <span style={{ color: 'var(--color-border)' }}>·</span>
+              <span style={{ fontFamily: 'var(--font-code)', fontSize: '0.7rem', color: 'var(--color-muted)' }}>
                 {(scan.scan_duration_ms / 1000).toFixed(1)}s
               </span>
             </>
           )}
-        </div>
-
-        <div style={{ marginTop: '0.75rem' }}>
-          <SeveritySummary scan={scan} />
+          <div style={{ marginLeft: 'auto' }}>
+            <SeveritySummary scan={scan} />
+          </div>
         </div>
       </header>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '420px 1fr', gap: '1.5rem', flex: 1, minHeight: 0 }}>
-        {/* Left — findings list */}
-        <div style={{ ...panelStyle, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid var(--color-border)' }}>
-            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '0.9rem', fontWeight: 600, color: 'var(--color-muted)' }}>
-              {findings.length} {findings.length === 1 ? 'Finding' : 'Findings'}
-            </h2>
+      <div style={{ display: 'grid', gridTemplateColumns: '380px 1fr', gap: '1.25rem', flex: 1, minHeight: 0 }}>
+        {/* Findings list */}
+        <div style={{ ...panel, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ padding: '0.625rem 0.875rem', borderBottom: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontFamily: 'var(--font-code)', fontSize: '0.65rem', letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--color-muted)' }}>
+              Findings
+            </span>
+            <span style={{ fontFamily: 'var(--font-code)', fontSize: '0.65rem', color: 'var(--color-muted)' }}>
+              {findings.length}
+            </span>
           </div>
-          <div style={{ overflowY: 'auto', padding: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.6rem', flex: 1 }}>
+          <div style={{ overflowY: 'auto', padding: '0.625rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
             {findings.length === 0 ? (
-              <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-low)', fontWeight: 600 }}>
-                No vulnerabilities found ✓
+              <div style={{ padding: '3rem 2rem', textAlign: 'center' }}>
+                <p style={{ fontFamily: 'var(--font-code)', fontSize: '0.72rem', color: 'var(--color-low)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                  No vulnerabilities found
+                </p>
+                <p style={{ fontSize: '0.78rem', color: 'var(--color-muted)', marginTop: '0.5rem' }}>
+                  Code passed all checks
+                </p>
               </div>
             ) : (
               findings.map(f => (
@@ -118,15 +169,15 @@ export default function ResultsPage() {
           </div>
         </div>
 
-        {/* Right — code panel */}
-        <div style={{ ...panelStyle, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ padding: '0.75rem 1.25rem', borderBottom: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <span style={{ fontFamily: 'var(--font-display)', fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-muted)' }}>
-              Code
+        {/* Code panel */}
+        <div style={{ ...panel, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ padding: '0.625rem 0.875rem', borderBottom: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <span style={{ fontFamily: 'var(--font-code)', fontSize: '0.65rem', letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--color-muted)' }}>
+              Source
             </span>
             {selectedFinding && (
-              <span style={{ fontSize: '0.75rem', color: highlightColor }}>
-                Highlighting: {selectedFinding.name} (lines {highlightLines.join(', ')})
+              <span style={{ fontFamily: 'var(--font-code)', fontSize: '0.68rem', color: highlightColor }}>
+                {selectedFinding.name} · {highlightLines.length > 0 ? `L.${highlightLines.join(', L.')}` : 'no lines'}
               </span>
             )}
           </div>

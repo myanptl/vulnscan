@@ -8,33 +8,26 @@ export default function ScanBeam({ active }) {
     const el = beamRef.current
     el.style.animation = 'none'
     void el.offsetHeight
-    el.style.animation = 'scanBeam 1.5s ease-in-out infinite'
+    el.style.animation = 'scanBeam 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite'
   }, [active])
 
   if (!active) return null
 
   return (
-    <>
-      <style>{`
-        @keyframes scanBeam {
-          0%   { transform: translateY(0); }
-          100% { transform: translateY(100%); }
-        }
-      `}</style>
-      <div
-        ref={beamRef}
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: '60px',
-          background: 'linear-gradient(to bottom, transparent, rgba(37,99,235,0.35), transparent)',
-          pointerEvents: 'none',
-          animation: 'scanBeam 1.5s ease-in-out infinite',
-          zIndex: 1,
-        }}
-      />
-    </>
+    <div
+      ref={beamRef}
+      style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: '80px',
+        background: 'linear-gradient(to bottom, transparent, rgba(34,211,238,0.12) 40%, rgba(34,211,238,0.25) 50%, rgba(34,211,238,0.12) 60%, transparent)',
+        borderBottom: '1px solid rgba(34,211,238,0.3)',
+        pointerEvents: 'none',
+        animation: 'scanBeam 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        zIndex: 1,
+      }}
+    />
   )
 }

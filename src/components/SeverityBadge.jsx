@@ -1,22 +1,22 @@
 import { SEVERITY_COLORS } from '../lib/constants.js'
 
 export default function SeverityBadge({ severity, size = 'sm' }) {
-  const color = SEVERITY_COLORS[severity] || '#94A3B8'
-  const pad = size === 'sm' ? '0.2rem 0.55rem' : '0.3rem 0.75rem'
-  const fontSize = size === 'sm' ? '0.7rem' : '0.8rem'
+  const color = SEVERITY_COLORS[severity] || '#6B88A8'
+  const fontSize = size === 'sm' ? '0.62rem' : '0.72rem'
 
   return (
     <span style={{
       display: 'inline-block',
-      padding: pad,
-      borderRadius: '999px',
-      background: `${color}22`,
+      padding: '0.15rem 0.45rem',
+      borderRadius: '2px',
+      background: `${color}18`,
       color,
-      border: `1px solid ${color}55`,
+      border: `1px solid ${color}50`,
       fontSize,
       fontWeight: 700,
-      fontFamily: 'var(--font-display)',
-      letterSpacing: '0.03em',
+      fontFamily: 'var(--font-code)',
+      letterSpacing: '0.07em',
+      textTransform: 'uppercase',
     }}>
       {severity}
     </span>

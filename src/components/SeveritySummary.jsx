@@ -9,15 +9,30 @@ const COUNT_KEYS = {
 
 export default function SeveritySummary({ scan }) {
   return (
-    <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+    <div style={{ display: 'flex', gap: '1.25rem', flexWrap: 'wrap', alignItems: 'center' }}>
       {SEVERITY_ORDER.map(sev => {
         const count = scan[COUNT_KEYS[sev]] ?? 0
         const color = SEVERITY_COLORS[sev]
         return (
-          <div key={sev} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: color, display: 'inline-block' }} />
-            <span style={{ color, fontWeight: 700, fontFamily: 'var(--font-display)', fontSize: '0.95rem' }}>{count}</span>
-            <span style={{ color: 'var(--color-muted)', fontSize: '0.8rem' }}>{sev}</span>
+          <div key={sev} style={{ display: 'flex', alignItems: 'baseline', gap: '0.35rem' }}>
+            <span style={{
+              fontFamily: 'var(--font-code)',
+              fontWeight: 700,
+              fontSize: '1.1rem',
+              color: count > 0 ? color : 'var(--color-border)',
+              lineHeight: 1,
+            }}>
+              {count}
+            </span>
+            <span style={{
+              fontFamily: 'var(--font-code)',
+              fontSize: '0.62rem',
+              letterSpacing: '0.07em',
+              textTransform: 'uppercase',
+              color: count > 0 ? color + 'aa' : 'var(--color-border)',
+            }}>
+              {sev}
+            </span>
           </div>
         )
       })}
