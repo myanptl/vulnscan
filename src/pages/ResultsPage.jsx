@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase.js'
 import { SEVERITY_COLORS, SEVERITY_ORDER } from '../lib/constants.js'
 import SeveritySummary from '../components/SeveritySummary.jsx'
 import FindingCard from '../components/FindingCard.jsx'
-import CodePanel from '../components/CodePanel.jsx'
+
+const CodePanel = lazy(() => import('../components/CodePanel.jsx'))
 
 const panel = {
   background: 'var(--color-card)',
@@ -182,12 +183,14 @@ export default function ResultsPage() {
             )}
           </div>
           <div style={{ flex: 1, overflow: 'auto' }}>
-            <CodePanel
-              code={scan.code_snippet}
-              language={scan.language}
-              highlightLines={highlightLines}
-              highlightColor={highlightColor}
-            />
+            <Suspense fallback={<div style={{ padding: '2rem', color: 'var(--color-muted)', fontSize: '0.85rem' }}>Loading...</div>}>
+              <CodePanel
+                code={scan.code_snippet}
+                language={scan.language}
+                highlightLines={highlightLines}
+                highlightColor={highlightColor}
+              />
+            </Suspense>
           </div>
         </div>
       </div>
