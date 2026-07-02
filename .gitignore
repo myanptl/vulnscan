@@ -4,3 +4,4 @@ dist
 .env
 .claude-flow/
 .superpowers/
+.vercel
