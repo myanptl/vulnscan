@@ -4,6 +4,9 @@ import { supabase } from '../lib/supabase.js'
 import { SEVERITY_COLORS, SEVERITY_ORDER } from '../lib/constants.js'
 import SeveritySummary from '../components/SeveritySummary.jsx'
 import FindingCard from '../components/FindingCard.jsx'
+import OwaspCoverage from '../components/OwaspCoverage.jsx'
+import { buildMarkdownReport } from '../lib/report.js'
+import { DEMO_SCAN } from '../lib/demoScan.js'
 
 const CodePanel = lazy(() => import('../components/CodePanel.jsx'))
 
@@ -21,8 +24,25 @@ export default function ResultsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [selectedFinding, setSelectedFinding] = useState(null)
+  const [copied, setCopied] = useState(false)
+
+  async function copyReport() {
+    try {
+      await navigator.clipboard.writeText(buildMarkdownReport(scan))
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      // clipboard unavailable (permissions) — leave button state unchanged
+    }
+  }
 
   useEffect(() => {
+    if (scanId === 'demo') {
+      setScan(DEMO_SCAN)
+      setSelectedFinding(DEMO_SCAN.findings[0])
+      setLoading(false)
+      return
+    }
     supabase.from('scans').select('*').eq('id', scanId).single()
       .then(({ data, error: err }) => {
         if (err || !data) { setError('Scan not found.'); return }
@@ -130,13 +150,27 @@ export default function ResultsPage() {
               </span>
             </>
           )}
-          <div style={{ marginLeft: 'auto' }}>
+          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
             <SeveritySummary scan={scan} />
+            <button
+              onClick={copyReport}
+              style={{
+                fontFamily: 'var(--font-code)', fontSize: '0.68rem', letterSpacing: '0.05em',
+                color: copied ? 'var(--color-low)' : 'var(--color-accent)',
+                border: `1px solid ${copied ? 'var(--color-low)' : 'var(--color-accent)'}44`,
+                borderRadius: '3px', padding: '0.35rem 0.6rem', background: 'transparent',
+                cursor: 'pointer', whiteSpace: 'nowrap',
+              }}
+            >
+              {copied ? '✓ copied' : 'copy report .md'}
+            </button>
           </div>
         </div>
       </header>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '380px 1fr', gap: '1.25rem', flex: 1, minHeight: 0 }}>
+      <OwaspCoverage findings={findings} onSelect={setSelectedFinding} />
+
+      <div className="results-grid" style={{ display: 'grid', gap: '1.25rem', flex: 1, minHeight: 0 }}>
         {/* Findings list */}
         <div style={{ ...panel, display: 'flex', flexDirection: 'column' }}>
           <div style={{ padding: '0.625rem 0.875rem', borderBottom: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>

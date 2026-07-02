@@ -56,3 +56,13 @@ input:focus, textarea:focus, select:focus {
   0%, 100% { opacity: 1; }
   50%       { opacity: 0; }
 }
+
+/* Results layout: findings rail + source panel, stacking on narrow screens */
+.results-grid {
+  grid-template-columns: 380px 1fr;
+}
+@media (max-width: 900px) {
+  .results-grid {
+    grid-template-columns: 1fr;
+  }
+}

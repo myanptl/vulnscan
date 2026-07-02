@@ -355,6 +355,18 @@ export default function ScanPage() {
               </span>
             ))}
           </div>
+          <button
+            onClick={() => navigate('/results/demo')}
+            style={{
+              fontFamily: 'var(--font-code)',
+              fontSize: '0.7rem',
+              color: 'var(--color-accent)',
+              letterSpacing: '0.04em',
+              marginTop: '0.25rem',
+            }}
+          >
+            view a demo report →
+          </button>
         </div>
       </div>
     </div>
