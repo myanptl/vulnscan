@@ -5,6 +5,7 @@ import { getOrCreateSessionId } from '../lib/session.js'
 import { parseGitHubUrl, fetchFileContent, buildMultiFileCode } from '../lib/github.js'
 import { LANGUAGE_OPTIONS } from '../lib/constants.js'
 import ScanBeam from '../components/ScanBeam.jsx'
+import ScanConsole from '../components/ScanConsole.jsx'
 import FileSelector from '../components/FileSelector.jsx'
 
 const card = {
@@ -294,6 +295,7 @@ export default function ScanPage() {
           )}
 
           <button
+            className="vs-btn"
             onClick={handleScan}
             disabled={scanning}
             style={{
@@ -316,7 +318,7 @@ export default function ScanPage() {
           </button>
         </div>
 
-        {/* Right — pre-scan placeholder */}
+        {/* Right — live engine log while scanning, placeholder otherwise */}
         <div style={{
           ...card,
           display: 'flex',
@@ -325,6 +327,10 @@ export default function ScanPage() {
           justifyContent: 'center',
           gap: '1rem',
         }}>
+          {scanning ? (
+            <ScanConsole />
+          ) : (
+            <>
           <div style={{ color: 'var(--color-muted)', opacity: 0.35 }}>
             <Crosshair />
           </div>
@@ -367,6 +373,8 @@ export default function ScanPage() {
           >
             view a demo report →
           </button>
+            </>
+          )}
         </div>
       </div>
     </div>
