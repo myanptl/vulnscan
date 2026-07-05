@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { fetchRepoFiles } from '../lib/github.js'
 
 export default function FileSelector({ owner, repo, onFilesChange }) {
@@ -6,6 +6,14 @@ export default function FileSelector({ owner, repo, onFilesChange }) {
   const [selected, setSelected] = useState(new Set())
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+
+  // Hold the latest onFilesChange so the fetch effect doesn't depend on the
+  // prop's identity (parents commonly pass an inline callback, which would
+  // otherwise re-trigger the fetch on every render).
+  const onFilesChangeRef = useRef(onFilesChange)
+  useEffect(() => {
+    onFilesChangeRef.current = onFilesChange
+  })
 
   useEffect(() => {
     if (!owner || !repo) return
@@ -15,25 +23,23 @@ export default function FileSelector({ owner, repo, onFilesChange }) {
       .then(allFiles => {
         const f = allFiles.slice(0, 15)
         setFiles(f)
-        const allPaths = new Set(f.map(x => x.path))
-        setSelected(allPaths)
-        onFilesChange(f)
+        setSelected(new Set(f.map(x => x.path)))
+        onFilesChangeRef.current(f)
       })
       .catch(e => setError(e.message))
       .finally(() => setLoading(false))
   }, [owner, repo])
 
   function toggle(path) {
-    setSelected(prev => {
-      const next = new Set(prev)
-      next.has(path) ? next.delete(path) : next.add(path)
-      return next
-    })
+    const next = new Set(selected)
+    if (next.has(path)) {
+      next.delete(path)
+    } else {
+      next.add(path)
+    }
+    setSelected(next)
+    onFilesChangeRef.current(files.filter(f => next.has(f.path)))
   }
-
-  useEffect(() => {
-    onFilesChange(files.filter(f => selected.has(f.path)))
-  }, [selected])
 
   if (loading) return <p style={{ color: 'var(--color-muted)', fontFamily: 'var(--font-code)', fontSize: '0.8rem' }}>Fetching files…</p>
   if (error) return <p style={{ color: 'var(--color-critical)', fontSize: '0.85rem' }}>Error: {error}</p>

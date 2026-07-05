@@ -21,7 +21,7 @@ export default function HistoryPage() {
       .limit(50)
       .then(({ data }) => setScans(data || []))
       .finally(() => setLoading(false))
-  }, [])
+  }, [sessionId])
 
   async function clearHistory() {
     if (!confirm('Delete all scan history for this session?')) return
