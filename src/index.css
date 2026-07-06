@@ -1,15 +1,15 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  /* Surfaces — deeper "lights off" stack */
-  --color-bg: #030A14;
-  --color-surface: #071726;
-  --color-card: #0A1D31;
-  --color-card-2: #0C2338;
+  /* Surfaces — "lights off" lab, green-black instead of the default navy */
+  --color-bg: #060D08;
+  --color-surface: #0A1710;
+  --color-card: #0D1F15;
+  --color-card-2: #10261A;
 
-  /* Accent */
-  --color-accent: #22D3EE;
-  --color-accent-dim: #128DA3;
+  /* Accent — volt green: the scanner's phosphor */
+  --color-accent: #A8E62E;
+  --color-accent-dim: #6FA31C;
 
   /* Severity — kept semantic and instantly readable */
   --color-critical: #FF4D4D;
@@ -18,10 +18,10 @@
   --color-low: #22C55E;
 
   /* Text */
-  --color-text: #E6EEF8;
-  --color-muted: #6E8AAB;
-  --color-border: #14293F;
-  --color-border-strong: #1E3A57;
+  --color-text: #EAF5EA;
+  --color-muted: #7FA389;
+  --color-border: #17301F;
+  --color-border-strong: #234730;
 
   --font-display: 'Space Grotesk', sans-serif;
   --font-code: 'JetBrains Mono', monospace;
@@ -68,7 +68,7 @@ body {
   pointer-events: none;
   background:
     radial-gradient(120% 60% at 50% -10%, color-mix(in oklab, var(--color-accent) 7%, transparent), transparent 60%),
-    radial-gradient(circle, rgba(34, 211, 238, 0.05) 1px, transparent 1px) 0 0 / 30px 30px,
+    radial-gradient(circle, rgba(168, 230, 46, 0.05) 1px, transparent 1px) 0 0 / 30px 30px,
     radial-gradient(ellipse at 50% 38%, transparent 52%, rgba(1, 5, 11, 0.6) 100%);
 }
 /* Faint CRT scanlines over everything — kept low-alpha to stay atmospheric,

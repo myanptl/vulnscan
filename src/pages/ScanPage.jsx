@@ -303,7 +303,7 @@ export default function ScanPage() {
               padding: '0.7rem',
               borderRadius: '3px',
               background: scanning ? 'transparent' : 'var(--color-accent)',
-              color: scanning ? 'var(--color-accent)' : '#03080F',
+              color: scanning ? 'var(--color-accent)' : '#08110A',
               border: `1px solid var(--color-accent)`,
               fontWeight: 700,
               fontSize: '0.82rem',
