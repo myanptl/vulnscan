@@ -8,7 +8,7 @@ export default function HistoryRow({ scan }) {
     <tr
       onClick={() => navigate(`/results/${scan.id}`)}
       style={{ cursor: 'pointer', borderBottom: '1px solid var(--color-border)' }}
-      onMouseEnter={e => e.currentTarget.style.background = 'rgba(34,211,238,0.03)'}
+      onMouseEnter={e => e.currentTarget.style.background = 'color-mix(in oklab, var(--color-accent) 5%, transparent)'}
       onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
     >
       <td style={{

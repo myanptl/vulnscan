@@ -1,7 +1,7 @@
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
+import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism'
 
-export default function CodePanel({ code, language, highlightLines = [], highlightColor = '#2563EB' }) {
+export default function CodePanel({ code, language, highlightLines = [], highlightColor = '#a8291d' }) {
   if (!code) {
     return (
       <div style={{ padding: '2rem', color: 'var(--color-muted)', textAlign: 'center', fontSize: '0.85rem' }}>
@@ -29,7 +29,7 @@ export default function CodePanel({ code, language, highlightLines = [], highlig
     <div style={{ height: '100%', overflow: 'auto' }}>
       <SyntaxHighlighter
         language={language || 'text'}
-        style={vscDarkPlus}
+        style={oneLight}
         showLineNumbers
         wrapLines
         lineProps={lineProps}

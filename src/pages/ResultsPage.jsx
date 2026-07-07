@@ -82,11 +82,23 @@ export default function ResultsPage() {
   const highlightColor = selectedFinding ? SEVERITY_COLORS[selectedFinding.severity] : 'var(--color-accent)'
   const highlightLines = selectedFinding?.affected_lines || []
 
+  // Verdict stamp — the worst severity present decides the mark on the file.
+  const verdict =
+    scan.total_critical > 0
+      ? { label: 'Critical', sev: 'var(--color-critical)' }
+      : scan.total_high > 0
+        ? { label: 'High Risk', sev: 'var(--color-high)' }
+        : scan.total_medium > 0
+          ? { label: 'Review', sev: 'var(--color-medium)' }
+          : findings.length > 0
+            ? { label: 'Low Risk', sev: 'var(--color-low)' }
+            : { label: 'Cleared', sev: 'var(--color-low)' }
+
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', padding: '1.75rem 2.5rem' }}>
       {/* Header */}
       <header style={{ marginBottom: '1.25rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.875rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem 1rem', flexWrap: 'wrap', marginBottom: '0.875rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <h1 style={{
               fontFamily: 'var(--font-display)',
@@ -105,10 +117,10 @@ export default function ResultsPage() {
               paddingLeft: '1rem',
               borderLeft: '1px solid var(--color-border)',
             }}>
-              Results
+              Case File
             </span>
           </div>
-          <div style={{ display: 'flex', gap: '1.5rem' }}>
+          <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
             <button
               onClick={() => navigate('/')}
               style={{ fontFamily: 'var(--font-code)', fontSize: '0.72rem', color: 'var(--color-muted)', letterSpacing: '0.04em' }}
@@ -121,11 +133,24 @@ export default function ResultsPage() {
             >
               history
             </button>
+            <button
+              onClick={copyReport}
+              style={{
+                fontFamily: 'var(--font-code)', fontSize: '0.68rem', letterSpacing: '0.05em',
+                color: copied ? 'var(--color-low)' : 'var(--color-accent)',
+                border: `1px solid ${copied ? 'var(--color-low)' : 'var(--color-accent)'}44`,
+                borderRadius: '3px', padding: '0.35rem 0.6rem', background: 'transparent',
+                cursor: 'pointer', whiteSpace: 'nowrap',
+              }}
+            >
+              {copied ? '✓ copied' : 'copy report .md'}
+            </button>
           </div>
         </div>
 
         {/* Scan metadata bar */}
         <div style={{
+          position: 'relative',
           display: 'flex',
           alignItems: 'center',
           gap: '1.5rem',
@@ -135,6 +160,14 @@ export default function ResultsPage() {
           border: '1px solid var(--color-border)',
           borderRadius: '3px',
         }}>
+          <span
+            className="vs-stamp vs-verdict-stamp"
+            style={{ '--stamp': verdict.sev }}
+            aria-label={`Assessment verdict: ${verdict.label}`}
+          >
+            {verdict.label}
+            <small>OWASP · assessed</small>
+          </span>
           <span style={{ fontFamily: 'var(--font-code)', fontSize: '0.75rem', color: 'var(--color-text)' }}>
             {scan.input_label}
           </span>
@@ -152,18 +185,6 @@ export default function ResultsPage() {
           )}
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
             <SeveritySummary scan={scan} />
-            <button
-              onClick={copyReport}
-              style={{
-                fontFamily: 'var(--font-code)', fontSize: '0.68rem', letterSpacing: '0.05em',
-                color: copied ? 'var(--color-low)' : 'var(--color-accent)',
-                border: `1px solid ${copied ? 'var(--color-low)' : 'var(--color-accent)'}44`,
-                borderRadius: '3px', padding: '0.35rem 0.6rem', background: 'transparent',
-                cursor: 'pointer', whiteSpace: 'nowrap',
-              }}
-            >
-              {copied ? '✓ copied' : 'copy report .md'}
-            </button>
           </div>
         </div>
       </header>
