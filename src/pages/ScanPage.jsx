@@ -172,7 +172,7 @@ export default function ScanPage() {
         </a>
       </header>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', flex: 1 }}>
+      <div className="scan-grid" style={{ display: 'grid', gap: '1.25rem', flex: 1 }}>
         {/* Left — input */}
         <div style={card}>
           {/* Mode tabs */}
