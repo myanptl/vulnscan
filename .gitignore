@@ -5,3 +5,6 @@ dist
 .claude-flow/
 .superpowers/
 .vercel
+
+# graphify analysis output (generated, not source)
+graphify-out/
