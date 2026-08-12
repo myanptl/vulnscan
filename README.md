@@ -1,5 +1,7 @@
 # VulnScan
 
+[![VulnScan](docs/screenshot.jpeg)](https://vulnscan-xi.vercel.app)
+
 An AI security scanner that catches **OWASP Top 10** vulnerabilities before they catch you.
 
 Paste code or drop a GitHub repo link and get a real vulnerability report in seconds — no login, no friction, just results.
