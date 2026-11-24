@@ -129,7 +129,7 @@ export default function ScanPage() {
 
       <div className="hero-line">
         <h1>Check code for the OWASP Top 10 before you ship it.</h1>
-        <p>Paste a file or point it at a public GitHub repo. You get each issue, the lines it lives on, and how to fix it.</p>
+        <p>Paste a file or point it at a public GitHub repo. You get each issue, its lines, and the fix.</p>
       </div>
 
       <div className="scan-layout">
@@ -163,7 +163,7 @@ export default function ScanPage() {
               </div>
             </div>
           ) : (
-            <div className="side-body" style={{ minHeight: 440 }}>
+            <div className="side-body" style={{ minHeight: 'clamp(280px, calc(100dvh - 252px), 680px)' }}>
               <label className="field">
                 <span>Public repository</span>
                 <input

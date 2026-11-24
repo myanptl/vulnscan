@@ -67,12 +67,12 @@ button:disabled { cursor: default; }
 .mono { font-family: var(--font-mono); }
 
 /* ---------- App shell ---------- */
-.shell { max-width: 1320px; margin: 0 auto; padding: 0 28px 40px; }
+.shell { max-width: 1320px; margin: 0 auto; padding: 0 28px 24px; }
 
 .topbar {
   position: sticky; top: 0; z-index: var(--z-sticky);
   display: flex; align-items: center; gap: 28px;
-  height: 56px; margin-bottom: 28px;
+  height: 52px; margin-bottom: 20px;
   background: color-mix(in oklab, var(--bg) 88%, transparent);
   backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--line);
@@ -164,13 +164,13 @@ kbd {
 
 /* ---------- Scan page ---------- */
 .scan-layout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 20px; align-items: start; }
-.hero-line { margin-bottom: 20px; }
+.hero-line { margin-bottom: 16px; }
 .hero-line h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.015em; text-wrap: balance; }
-.hero-line p { color: var(--ink-2); margin-top: 4px; max-width: 62ch; }
+.hero-line p { color: var(--ink-2); margin-top: 4px; max-width: 72ch; text-wrap: pretty; }
 
 /* Code editor: line gutter + textarea sharing one scroll */
 .editor { position: relative; overflow: hidden; border-radius: 0 0 var(--r) var(--r); }
-.editor-scroll { display: flex; height: 440px; overflow: auto; background: var(--surface); }
+.editor-scroll { display: flex; height: clamp(280px, calc(100dvh - 252px), 680px); overflow: auto; background: var(--surface); }
 .gutter {
   flex: none; padding: 14px 10px 14px 14px; text-align: right;
   font-family: var(--font-mono); font-size: 12.5px; line-height: 20px;
@@ -192,16 +192,16 @@ kbd {
   border-bottom: 1px solid var(--accent);
   animation: sweep 1.6s var(--ease) infinite;
 }
-@keyframes sweep { from { transform: translateY(-64px); } to { transform: translateY(440px); } }
+@keyframes sweep { from { transform: translateY(-64px); } to { transform: translateY(680px); } }
 
-.side { display: flex; flex-direction: column; gap: 20px; position: sticky; top: 76px; }
+.side { display: flex; flex-direction: column; gap: 12px; position: sticky; top: 68px; }
 .side-body { padding: 14px; display: flex; flex-direction: column; gap: 14px; }
 
 /* OWASP checklist: the same ten rows tick during a scan and light up in results */
 .checklist { list-style: none; padding: 6px; }
 .checklist li {
   display: grid; grid-template-columns: 34px 1fr auto; align-items: center; gap: 8px;
-  height: 30px; padding: 0 8px; border-radius: var(--r-sm);
+  height: 25px; padding: 0 8px; border-radius: var(--r-sm);
   font-size: 12.5px; color: var(--ink-2);
   transition: color var(--t2), background var(--t2);
 }
@@ -214,7 +214,7 @@ kbd {
 .checklist li.hit { padding: 0; display: block; color: var(--ink); }
 .checklist li.hit button {
   display: grid; grid-template-columns: 34px 1fr auto; align-items: center; gap: 8px;
-  width: 100%; height: 30px; padding: 0 8px; border-radius: var(--r-sm); text-align: left;
+  width: 100%; height: 25px; padding: 0 8px; border-radius: var(--r-sm); text-align: left;
   transition: background var(--t1);
 }
 .checklist li.hit button:hover { background: var(--surface-2); }
