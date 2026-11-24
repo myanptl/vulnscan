@@ -1,29 +1,56 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, Link } from 'react-router-dom'
+import { Check, Copy } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { SEVERITY_COLORS, SEVERITY_ORDER } from '../lib/constants.js'
-import SeveritySummary from '../components/SeveritySummary.jsx'
+import Topbar from '../components/Topbar.jsx'
 import FindingCard from '../components/FindingCard.jsx'
-import OwaspCoverage from '../components/OwaspCoverage.jsx'
+import OwaspChecklist from '../components/OwaspChecklist.jsx'
 import { buildMarkdownReport } from '../lib/report.js'
 import { DEMO_SCAN } from '../lib/demoScan.js'
 
 const CodePanel = lazy(() => import('../components/CodePanel.jsx'))
 
-const panel = {
-  background: 'var(--color-card)',
-  border: '1px solid var(--color-border)',
-  borderRadius: '4px',
-  overflow: 'hidden',
+const TALLY = [
+  ['Critical', 'total_critical'],
+  ['High', 'total_high'],
+  ['Medium', 'total_medium'],
+  ['Low', 'total_low'],
+]
+
+function verdictFor(scan, count) {
+  if (scan.total_critical > 0) return { label: 'Critical issues found', sev: 'Critical' }
+  if (scan.total_high > 0) return { label: 'High-risk issues found', sev: 'High' }
+  if (scan.total_medium > 0) return { label: 'Worth a review', sev: 'Medium' }
+  if (count > 0) return { label: 'Low risk', sev: 'Low' }
+  return { label: 'No issues found', sev: 'Low' }
+}
+
+function Skeleton() {
+  return (
+    <div className="shell">
+      <Topbar />
+      <div className="panel summary" aria-busy="true">
+        <div className="skeleton" style={{ width: 220 }} />
+        <div className="skeleton" style={{ width: 140 }} />
+      </div>
+      <div className="results-layout">
+        {[0, 1, 2].map(i => (
+          <div key={i} className="panel" style={{ padding: 16, display: 'grid', gap: 12 }}>
+            {[80, 60, 90, 70].map(w => <div key={w} className="skeleton" style={{ width: `${w}%` }} />)}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
 }
 
 export default function ResultsPage() {
   const { scanId } = useParams()
-  const navigate = useNavigate()
   const [scan, setScan] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [selectedFinding, setSelectedFinding] = useState(null)
+  const [selected, setSelected] = useState(null)
   const [copied, setCopied] = useState(false)
 
   async function copyReport() {
@@ -32,222 +59,117 @@ export default function ResultsPage() {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch {
-      // clipboard unavailable (permissions) — leave button state unchanged
+      // clipboard unavailable (permissions): leave the button as it was
     }
   }
 
   useEffect(() => {
     if (scanId === 'demo') {
       setScan(DEMO_SCAN)
-      setSelectedFinding(DEMO_SCAN.findings[0])
+      setSelected(DEMO_SCAN.findings[0])
       setLoading(false)
       return
     }
     supabase.from('scans').select('*').eq('id', scanId).single()
       .then(({ data, error: err }) => {
-        if (err || !data) { setError('Scan not found.'); return }
+        if (err || !data) { setError('This scan doesn’t exist, or it was cleared from history.'); return }
         setScan(data)
-        const findings = data.findings || []
-        if (findings.length > 0) setSelectedFinding(findings[0])
+        if (data.findings?.length) setSelected(data.findings[0])
       })
       .finally(() => setLoading(false))
   }, [scanId])
 
-  if (loading) return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <span style={{ fontFamily: 'var(--font-code)', fontSize: '0.78rem', color: 'var(--color-muted)', letterSpacing: '0.08em' }}>
-        loading...
-      </span>
-    </div>
-  )
+  if (loading) return <Skeleton />
 
   if (error || !scan) return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1rem' }}>
-      <p style={{ fontFamily: 'var(--font-code)', fontSize: '0.78rem', color: 'var(--color-critical)' }}>
-        ✕ {error || 'Scan not found.'}
-      </p>
-      <button
-        onClick={() => navigate('/')}
-        style={{ fontFamily: 'var(--font-code)', fontSize: '0.75rem', color: 'var(--color-accent)', letterSpacing: '0.04em' }}
-      >
-        ← new scan
-      </button>
+    <div className="shell">
+      <Topbar />
+      <div className="panel empty">
+        <strong>Scan not found</strong>
+        <p>{error}</p>
+        <p style={{ marginTop: 12 }}><Link className="link" to="/">Run a new scan →</Link></p>
+      </div>
     </div>
   )
 
   const findings = [...(scan.findings || [])].sort((a, b) =>
     SEVERITY_ORDER.indexOf(a.severity) - SEVERITY_ORDER.indexOf(b.severity)
   )
-
-  const highlightColor = selectedFinding ? SEVERITY_COLORS[selectedFinding.severity] : 'var(--color-accent)'
-  const highlightLines = selectedFinding?.affected_lines || []
-
-  // Verdict stamp — the worst severity present decides the mark on the file.
-  const verdict =
-    scan.total_critical > 0
-      ? { label: 'Critical', sev: 'var(--color-critical)' }
-      : scan.total_high > 0
-        ? { label: 'High Risk', sev: 'var(--color-high)' }
-        : scan.total_medium > 0
-          ? { label: 'Review', sev: 'var(--color-medium)' }
-          : findings.length > 0
-            ? { label: 'Low Risk', sev: 'var(--color-low)' }
-            : { label: 'Cleared', sev: 'var(--color-low)' }
+  const verdict = verdictFor(scan, findings.length)
+  const sevColor = selected ? SEVERITY_COLORS[selected.severity] : 'var(--accent)'
+  const lines = selected?.affected_lines || []
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', padding: '1.75rem 2.5rem' }}>
-      {/* Header */}
-      <header style={{ marginBottom: '1.25rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem 1rem', flexWrap: 'wrap', marginBottom: '0.875rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <h1 style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: '1.25rem',
-              fontWeight: 700,
-              letterSpacing: '-0.02em',
-            }}>
-              <span style={{ color: 'var(--color-accent)' }}>Vuln</span>Scan
-            </h1>
-            <span style={{
-              fontFamily: 'var(--font-code)',
-              fontSize: '0.65rem',
-              color: 'var(--color-muted)',
-              letterSpacing: '0.06em',
-              textTransform: 'uppercase',
-              paddingLeft: '1rem',
-              borderLeft: '1px solid var(--color-border)',
-            }}>
-              Case File
-            </span>
+    <div className="shell">
+      <Topbar>
+        <button type="button" onClick={copyReport} aria-live="polite">
+          {copied ? <><Check size={13} style={{ verticalAlign: -2 }} /> Copied</> : <><Copy size={13} style={{ verticalAlign: -2 }} /> Copy report</>}
+        </button>
+      </Topbar>
+
+      <section className="panel summary fade-in" aria-label="Scan summary">
+        <div>
+          <div className="verdict" style={{ '--sev': SEVERITY_COLORS[verdict.sev] }}>
+            <span className="dot" aria-hidden="true" />
+            <strong>{verdict.label}</strong>
           </div>
-          <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
-            <button
-              onClick={() => navigate('/')}
-              style={{ fontFamily: 'var(--font-code)', fontSize: '0.72rem', color: 'var(--color-muted)', letterSpacing: '0.04em' }}
-            >
-              ← new scan
-            </button>
-            <button
-              onClick={() => navigate('/history')}
-              style={{ fontFamily: 'var(--font-code)', fontSize: '0.72rem', color: 'var(--color-muted)', letterSpacing: '0.04em' }}
-            >
-              history
-            </button>
-            <button
-              onClick={copyReport}
-              style={{
-                fontFamily: 'var(--font-code)', fontSize: '0.68rem', letterSpacing: '0.05em',
-                color: copied ? 'var(--color-low)' : 'var(--color-accent)',
-                border: `1px solid ${copied ? 'var(--color-low)' : 'var(--color-accent)'}44`,
-                borderRadius: '3px', padding: '0.35rem 0.6rem', background: 'transparent',
-                cursor: 'pointer', whiteSpace: 'nowrap',
-              }}
-            >
-              {copied ? '✓ copied' : 'copy report .md'}
-            </button>
+          <div className="meta" style={{ marginTop: 6, marginLeft: 20 }}>
+            <span className="target">{scan.input_label}</span>
+            <span>{new Date(scan.created_at).toLocaleString()}</span>
+            {scan.scan_duration_ms ? <span>{(scan.scan_duration_ms / 1000).toFixed(1)}s</span> : null}
+            {scanId === 'demo' && <span>Sample report</span>}
           </div>
         </div>
-
-        {/* Scan metadata bar */}
-        <div style={{
-          position: 'relative',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '1.5rem',
-          flexWrap: 'wrap',
-          padding: '0.625rem 0.875rem',
-          background: 'var(--color-card)',
-          border: '1px solid var(--color-border)',
-          borderRadius: '3px',
-        }}>
-          <span
-            className="vs-stamp vs-verdict-stamp"
-            style={{ '--stamp': verdict.sev }}
-            aria-label={`Assessment verdict: ${verdict.label}`}
-          >
-            {verdict.label}
-            <small>OWASP · assessed</small>
-          </span>
-          <span style={{ fontFamily: 'var(--font-code)', fontSize: '0.75rem', color: 'var(--color-text)' }}>
-            {scan.input_label}
-          </span>
-          <span style={{ color: 'var(--color-border)' }}>·</span>
-          <span style={{ fontFamily: 'var(--font-code)', fontSize: '0.7rem', color: 'var(--color-muted)' }}>
-            {new Date(scan.created_at).toLocaleString()}
-          </span>
-          {scan.scan_duration_ms && (
-            <>
-              <span style={{ color: 'var(--color-border)' }}>·</span>
-              <span style={{ fontFamily: 'var(--font-code)', fontSize: '0.7rem', color: 'var(--color-muted)' }}>
-                {(scan.scan_duration_ms / 1000).toFixed(1)}s
-              </span>
-            </>
-          )}
-          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-            <SeveritySummary scan={scan} />
-          </div>
+        <div className="tally">
+          {TALLY.map(([sev, field]) => {
+            const n = scan[field] ?? 0
+            return (
+              <div key={sev} style={{ '--sev': SEVERITY_COLORS[sev] }}>
+                <b className={n ? '' : 'zero'}>{n}</b>
+                <span>{sev}</span>
+              </div>
+            )
+          })}
         </div>
-      </header>
+      </section>
 
-      <OwaspCoverage findings={findings} onSelect={setSelectedFinding} />
+      <div className="results-layout">
+        <section className="panel" aria-label="OWASP categories">
+          <div className="panel-head"><strong>OWASP Top 10</strong></div>
+          <OwaspChecklist findings={findings} onSelect={setSelected} />
+        </section>
 
-      <div className="results-grid" style={{ display: 'grid', gap: '1.25rem', flex: 1, minHeight: 0 }}>
-        {/* Findings list */}
-        <div style={{ ...panel, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ padding: '0.625rem 0.875rem', borderBottom: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontFamily: 'var(--font-code)', fontSize: '0.65rem', letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--color-muted)' }}>
-              Findings
-            </span>
-            <span style={{ fontFamily: 'var(--font-code)', fontSize: '0.65rem', color: 'var(--color-muted)' }}>
-              {findings.length}
-            </span>
-          </div>
-          <div style={{ overflowY: 'auto', padding: '0.625rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
+        <section className="panel" aria-label="Findings">
+          <div className="panel-head"><strong>Findings</strong><span className="end mono">{findings.length}</span></div>
+          <div className="findings">
             {findings.length === 0 ? (
-              <div style={{ padding: '3rem 2rem', textAlign: 'center' }}>
-                <p style={{ fontFamily: 'var(--font-code)', fontSize: '0.72rem', color: 'var(--color-low)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-                  No vulnerabilities found
-                </p>
-                <p style={{ fontSize: '0.78rem', color: 'var(--color-muted)', marginTop: '0.5rem' }}>
-                  Code passed all checks
-                </p>
+              <div className="empty">
+                <strong>Nothing flagged</strong>
+                This code passed every check. Static analysis can miss logic bugs, so still review auth and data flows by hand.
               </div>
             ) : (
               findings.map(f => (
-                <FindingCard
-                  key={f.id}
-                  finding={f}
-                  onSelect={setSelectedFinding}
-                  isSelected={selectedFinding?.id === f.id}
-                />
+                <FindingCard key={f.id} finding={f} onSelect={setSelected} isSelected={selected?.id === f.id} />
               ))
             )}
           </div>
-        </div>
+        </section>
 
-        {/* Code panel */}
-        <div style={{ ...panel, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ padding: '0.625rem 0.875rem', borderBottom: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <span style={{ fontFamily: 'var(--font-code)', fontSize: '0.65rem', letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--color-muted)' }}>
-              Source
-            </span>
-            {selectedFinding && (
-              <span style={{ fontFamily: 'var(--font-code)', fontSize: '0.68rem', color: highlightColor }}>
-                {selectedFinding.name} · {highlightLines.length > 0 ? `L.${highlightLines.join(', L.')}` : 'no lines'}
+        <section className="panel code-col" aria-label="Source">
+          <div className="panel-head">
+            <strong>Source</strong>
+            {selected && (
+              <span className="end mono" style={{ color: sevColor }}>
+                {lines.length ? `line ${lines.join(', ')}` : 'no line info'}
               </span>
             )}
           </div>
-          <div style={{ flex: 1, overflow: 'auto' }}>
-            <Suspense fallback={<div style={{ padding: '2rem', color: 'var(--color-muted)', fontSize: '0.85rem' }}>Loading...</div>}>
-              <CodePanel
-                code={scan.code_snippet}
-                language={scan.language}
-                highlightLines={highlightLines}
-                highlightColor={highlightColor}
-              />
+          <div className="code-wrap">
+            <Suspense fallback={<div style={{ padding: 16, display: 'grid', gap: 10 }}>{[70, 50, 85].map(w => <div key={w} className="skeleton" style={{ width: `${w}%` }} />)}</div>}>
+              <CodePanel code={scan.code_snippet} language={scan.language} highlightLines={lines} highlightColor={sevColor} />
             </Suspense>
           </div>
-        </div>
+        </section>
       </div>
     </div>
   )

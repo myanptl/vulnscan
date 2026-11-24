@@ -25,7 +25,7 @@ npm run preview
 ```
 
 ## Conventions
-- Design = "audit dossier" (Jul 6 2026 reskin): LIGHT warm-manila paper, typewriter ink, oxblood stamp red brand (`--color-accent`), severity as ink stamps, red margin rule, rotated verdict rubber-stamp on results. Do NOT restore the old acid-green-on-black. Palette lives in `src/index.css` `:root`; code listings use the light `oneLight` syntax theme.
+- Design = "graphite + violet" (Nov 24 2026 revamp): dark graphite surfaces tinted toward violet, ONE violet accent (`--accent`) for actions only, red/orange/yellow/green reserved for severity. IBM Plex Sans + Plex Mono. Motion = scan beam over the editor + OWASP checklist ticking during a scan. Tokens in `src/index.css` `:root`; code uses `oneDark`. Do NOT restore acid-green-on-black or the old manila dossier.
 - Detection rules are the product — every rule needs a test (true positive AND true negative). Aim 80%+ coverage on rule logic.
 - Never trust scanned input: it's untrusted code. Render it, never `eval`/execute it. Sanitize before `dangerouslySetInnerHTML`.
 - Supabase: RLS on, anon key only in client, no service-role key in the bundle.

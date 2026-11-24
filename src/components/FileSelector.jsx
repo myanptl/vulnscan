@@ -41,23 +41,21 @@ export default function FileSelector({ owner, repo, onFilesChange }) {
     onFilesChangeRef.current(files.filter(f => next.has(f.path)))
   }
 
-  if (loading) return <p style={{ color: 'var(--color-muted)', fontFamily: 'var(--font-code)', fontSize: '0.8rem' }}>Fetching files…</p>
-  if (error) return <p style={{ color: 'var(--color-critical)', fontSize: '0.85rem' }}>Error: {error}</p>
-  if (!files.length) return null
+  if (loading) return <div className="skeleton" style={{ width: '60%' }} />
+  if (error) return <p className="error-text">Couldn’t list files: {error}</p>
+  if (!files.length) return <p style={{ color: 'var(--ink-3)', fontSize: 13 }}>No source files found in this repo.</p>
 
   return (
-    <div style={{ marginTop: '0.75rem' }}>
-      <p style={{ fontSize: '0.75rem', color: 'var(--color-muted)', marginBottom: '0.5rem' }}>
-        {files.length} source files found (max 15) — uncheck to exclude
-      </p>
-      <div style={{ maxHeight: '220px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+    <div className="field">
+      <span>{selected.size} of {files.length} files selected</span>
+      <div style={{ maxHeight: 300, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 2, border: '1px solid var(--line)', borderRadius: 'var(--r-sm)', padding: 6 }}>
         {files.map(f => (
-          <label key={f.path} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.8rem', fontFamily: 'var(--font-code)', color: selected.has(f.path) ? 'var(--color-text)' : 'var(--color-muted)' }}>
+          <label key={f.path} className="mono" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 6px', cursor: 'pointer', fontSize: 12.5, color: selected.has(f.path) ? 'var(--ink)' : 'var(--ink-3)' }}>
             <input
               type="checkbox"
               checked={selected.has(f.path)}
               onChange={() => toggle(f.path)}
-              style={{ accentColor: 'var(--color-primary)', width: '14px', height: '14px' }}
+              style={{ accentColor: 'var(--accent)', width: 14, height: 14, padding: 0 }}
             />
             {f.path}
           </label>

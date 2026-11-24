@@ -1,33 +1,16 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { ArrowRight } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { getOrCreateSessionId } from '../lib/session.js'
 import { parseGitHubUrl, fetchFileContent, buildMultiFileCode } from '../lib/github.js'
 import { LANGUAGE_OPTIONS } from '../lib/constants.js'
-import ScanBeam from '../components/ScanBeam.jsx'
-import ScanConsole from '../components/ScanConsole.jsx'
+import Topbar from '../components/Topbar.jsx'
 import FileSelector from '../components/FileSelector.jsx'
+import OwaspChecklist from '../components/OwaspChecklist.jsx'
 
-const card = {
-  background: 'var(--color-card)',
-  border: '1px solid var(--color-border)',
-  borderRadius: '4px',
-  padding: '1.5rem',
-}
-
-function Crosshair() {
-  return (
-    <svg width="52" height="52" viewBox="0 0 52 52" fill="none" aria-hidden="true">
-      <circle cx="26" cy="26" r="22" stroke="currentColor" strokeWidth="1" strokeDasharray="3 6" />
-      <circle cx="26" cy="26" r="12" stroke="currentColor" strokeWidth="1" />
-      <circle cx="26" cy="26" r="3.5" fill="currentColor" />
-      <line x1="4"  y1="26" x2="13" y2="26" stroke="currentColor" strokeWidth="1.5" />
-      <line x1="39" y1="26" x2="48" y2="26" stroke="currentColor" strokeWidth="1.5" />
-      <line x1="26" y1="4"  x2="26" y2="13" stroke="currentColor" strokeWidth="1.5" />
-      <line x1="26" y1="39" x2="26" y2="48" stroke="currentColor" strokeWidth="1.5" />
-    </svg>
-  )
-}
+const MAX_CHARS = 50000
+const TICK_MS = 380 // pacing for the checklist while the single scan request runs
 
 export default function ScanPage() {
   const navigate = useNavigate()
@@ -38,7 +21,18 @@ export default function ScanPage() {
   const [selectedFiles, setSelectedFiles] = useState([])
   const [repoInfo, setRepoInfo] = useState(null)
   const [scanning, setScanning] = useState(false)
+  const [progress, setProgress] = useState(null)
   const [error, setError] = useState(null)
+
+  // Tick the OWASP rows while scanning; hold on the last row until the request returns.
+  useEffect(() => {
+    if (!scanning) return
+    const id = setInterval(() => setProgress(p => (p < 9 ? p + 1 : p)), TICK_MS)
+    return () => clearInterval(id)
+  }, [scanning])
+
+  const lineCount = Math.max(code.split('\n').length, 22)
+  const gutter = Array.from({ length: lineCount }, (_, i) => i + 1).join('\n')
 
   function handleGithubUrlBlur() {
     const parsed = parseGitHubUrl(githubUrl)
@@ -46,23 +40,24 @@ export default function ScanPage() {
       setRepoInfo(parsed)
       setError(null)
     } else if (githubUrl.trim()) {
-      setError('Invalid GitHub URL — expected: https://github.com/owner/repo')
+      setError('That isn’t a GitHub repo URL. Expected https://github.com/owner/repo')
       setRepoInfo(null)
     }
   }
 
   async function handleScan() {
     setError(null)
+    setProgress(0)
     setScanning(true)
 
     try {
       let codeToScan = ''
       let inputLabel = ''
-      let inputType = mode
+      const inputType = mode
 
       if (mode === 'code') {
         if (!code.trim()) throw new Error('Paste some code to scan.')
-        codeToScan = code.slice(0, 50000)
+        codeToScan = code.slice(0, MAX_CHARS)
         inputLabel = 'Pasted Code'
       } else {
         if (!repoInfo) throw new Error('Enter a valid GitHub repo URL.')
@@ -75,7 +70,7 @@ export default function ScanPage() {
         )
         const fileContents = results.filter(r => r.status === 'fulfilled').map(r => r.value)
         if (!fileContents.length) throw new Error('Could not fetch any files from this repository.')
-        codeToScan = buildMultiFileCode(fileContents).slice(0, 50000)
+        codeToScan = buildMultiFileCode(fileContents).slice(0, MAX_CHARS)
         inputLabel = `${repoInfo.owner}/${repoInfo.repo}`
       }
 
@@ -120,262 +115,108 @@ export default function ScanPage() {
       setError(e.message)
     } finally {
       setScanning(false)
+      setProgress(null)
     }
   }
 
-  return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', padding: '2rem 2.5rem' }}>
-      <header style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.3rem' }}>
-            <h1 style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: '1.5rem',
-              fontWeight: 700,
-              letterSpacing: '-0.02em',
-              color: 'var(--color-text)',
-            }}>
-              <span style={{ color: 'var(--color-accent)' }}>Vuln</span>Scan
-            </h1>
-            <span style={{
-              fontSize: '0.6rem',
-              fontFamily: 'var(--font-code)',
-              color: 'var(--color-accent)',
-              border: '1px solid var(--color-accent)',
-              borderRadius: '2px',
-              padding: '0.1rem 0.35rem',
-              letterSpacing: '0.06em',
-              opacity: 0.8,
-            }}>
-              v1
-            </span>
-          </div>
-          <p style={{
-            fontFamily: 'var(--font-code)',
-            fontSize: '0.7rem',
-            color: 'var(--color-muted)',
-            letterSpacing: '0.05em',
-          }}>
-            OWASP Top 10 · Static analysis · GitHub support
-          </p>
-        </div>
-        <a
-          href="/history"
-          style={{
-            fontFamily: 'var(--font-code)',
-            fontSize: '0.72rem',
-            color: 'var(--color-muted)',
-            letterSpacing: '0.04em',
-          }}
-        >
-          history →
-        </a>
-      </header>
+  function onEditorKey(e) {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && !scanning) handleScan()
+  }
 
-      <div className="scan-grid" style={{ display: 'grid', gap: '1.25rem', flex: 1 }}>
-        {/* Left — input */}
-        <div style={card}>
-          {/* Mode tabs */}
-          <div style={{ display: 'flex', gap: '0', marginBottom: '1.25rem', borderBottom: '1px solid var(--color-border)' }}>
-            {[
-              { id: 'code', label: 'Code' },
-              { id: 'github', label: 'GitHub' },
-            ].map(({ id, label }) => (
-              <button
-                key={id}
-                onClick={() => setMode(id)}
-                style={{
-                  padding: '0.45rem 1rem',
-                  fontFamily: 'var(--font-code)',
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                  letterSpacing: '0.03em',
-                  color: mode === id ? 'var(--color-accent)' : 'var(--color-muted)',
-                  borderBottom: `2px solid ${mode === id ? 'var(--color-accent)' : 'transparent'}`,
-                  marginBottom: '-1px',
-                  transition: 'color 0.12s, border-color 0.12s',
-                }}
-              >
-                {label}
-              </button>
-            ))}
+  return (
+    <div className="shell">
+      <Topbar />
+
+      <div className="hero-line">
+        <h1>Check code for the OWASP Top 10 before you ship it.</h1>
+        <p>Paste a file or point it at a public GitHub repo. You get each issue, the lines it lives on, and how to fix it.</p>
+      </div>
+
+      <div className="scan-layout">
+        <section className="panel" aria-label="Source to scan">
+          <div className="panel-head">
+            <div className="seg" role="group" aria-label="Input type">
+              <button type="button" aria-pressed={mode === 'code'} onClick={() => setMode('code')}>Paste code</button>
+              <button type="button" aria-pressed={mode === 'github'} onClick={() => setMode('github')}>GitHub repo</button>
+            </div>
+            {mode === 'code' && (
+              <span className="end mono">{code.length.toLocaleString()} / {MAX_CHARS.toLocaleString()}</span>
+            )}
           </div>
 
           {mode === 'code' ? (
-            <>
-              <div style={{ position: 'relative', marginBottom: '0.875rem' }}>
-                <ScanBeam active={scanning} />
-                <div style={{
-                  padding: '0.5rem 0.75rem 0',
-                  background: 'var(--color-surface)',
-                  border: '1px solid var(--color-border)',
-                  borderRadius: '3px 3px 0 0',
-                  borderBottom: 'none',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                }}>
-                  <span style={{ fontFamily: 'var(--font-code)', fontSize: '0.65rem', color: 'var(--color-muted)', letterSpacing: '0.04em' }}>
-                    INPUT
-                  </span>
-                  {scanning && (
-                    <span style={{
-                      fontFamily: 'var(--font-code)',
-                      fontSize: '0.62rem',
-                      color: 'var(--color-accent)',
-                      animation: 'blink 1s step-end infinite',
-                      letterSpacing: '0.05em',
-                    }}>
-                      SCANNING...
-                    </span>
-                  )}
-                </div>
+            <div className="editor">
+              {scanning && <div className="beam" aria-hidden="true" />}
+              <div className="editor-scroll">
+                <div className="gutter" aria-hidden="true">{gutter}</div>
                 <textarea
+                  aria-label="Code to scan"
                   value={code}
                   onChange={e => setCode(e.target.value)}
-                  placeholder="// paste code here"
+                  onKeyDown={onEditorKey}
+                  placeholder={'// paste code here\nconst q = "SELECT * FROM users WHERE id = " + req.query.id'}
                   spellCheck={false}
-                  style={{
-                    width: '100%',
-                    height: '300px',
-                    resize: 'vertical',
-                    fontFamily: 'var(--font-code)',
-                    fontSize: '0.78rem',
-                    lineHeight: 1.65,
-                    background: 'var(--color-surface)',
-                    padding: '0.75rem',
-                    border: '1px solid var(--color-border)',
-                    borderTop: 'none',
-                    borderRadius: '0 0 3px 3px',
-                    color: 'var(--color-text)',
-                    display: 'block',
-                  }}
+                  wrap="off"
+                  rows={lineCount}
+                  maxLength={MAX_CHARS}
                 />
               </div>
-              <select
-                value={language}
-                onChange={e => setLanguage(e.target.value)}
-                style={{ width: '100%', marginBottom: '1rem' }}
-              >
-                {LANGUAGE_OPTIONS.map(opt => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
-                ))}
-              </select>
-            </>
+            </div>
           ) : (
-            <>
-              <input
-                type="url"
-                value={githubUrl}
-                onChange={e => setGithubUrl(e.target.value)}
-                onBlur={handleGithubUrlBlur}
-                placeholder="https://github.com/owner/repo"
-                style={{ width: '100%', marginBottom: '1rem' }}
-              />
-              {repoInfo && (
-                <FileSelector
-                  owner={repoInfo.owner}
-                  repo={repoInfo.repo}
-                  onFilesChange={setSelectedFiles}
+            <div className="side-body" style={{ minHeight: 440 }}>
+              <label className="field">
+                <span>Public repository</span>
+                <input
+                  type="url"
+                  value={githubUrl}
+                  onChange={e => setGithubUrl(e.target.value)}
+                  onBlur={handleGithubUrlBlur}
+                  placeholder="https://github.com/owner/repo"
                 />
+              </label>
+              {repoInfo ? (
+                <FileSelector owner={repoInfo.owner} repo={repoInfo.repo} onFilesChange={setSelectedFiles} />
+              ) : (
+                <p style={{ color: 'var(--ink-3)', fontSize: 13 }}>Up to 15 source files are pulled from the default branch. You can uncheck any you don&rsquo;t want scanned.</p>
               )}
-            </>
+            </div>
           )}
+        </section>
 
-          {error && (
-            <p style={{
-              fontFamily: 'var(--font-code)',
-              fontSize: '0.75rem',
-              color: 'var(--color-critical)',
-              marginBottom: '1rem',
-              letterSpacing: '0.02em',
-            }}>
-              ✕ {error}
-            </p>
-          )}
+        <aside className="side">
+          <section className="panel">
+            <div className="side-body">
+              <label className="field">
+                <span>Language</span>
+                <select value={language} onChange={e => setLanguage(e.target.value)}>
+                  {LANGUAGE_OPTIONS.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </label>
 
-          <button
-            className="vs-btn"
-            onClick={handleScan}
-            disabled={scanning}
-            style={{
-              width: '100%',
-              padding: '0.7rem',
-              borderRadius: '3px',
-              background: scanning ? 'transparent' : 'var(--color-accent)',
-              color: scanning ? 'var(--color-accent)' : '#08110A',
-              border: `1px solid var(--color-accent)`,
-              fontWeight: 700,
-              fontSize: '0.82rem',
-              fontFamily: 'var(--font-code)',
-              letterSpacing: '0.06em',
-              textTransform: 'uppercase',
-              transition: 'background 0.15s, color 0.15s',
-              opacity: scanning ? 0.6 : 1,
-            }}
-          >
-            {scanning ? '[ analyzing... ]' : '[ analyze ]'}
-          </button>
-        </div>
+              {error && <p className="error-text" role="alert">{error}</p>}
 
-        {/* Right — live engine log while scanning, placeholder otherwise */}
-        <div style={{
-          ...card,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '1rem',
-        }}>
-          {scanning ? (
-            <ScanConsole />
-          ) : (
-            <>
-          <div style={{ color: 'var(--color-muted)', opacity: 0.35 }}>
-            <Crosshair />
-          </div>
-          <div style={{ textAlign: 'center' }}>
-            <p style={{
-              fontFamily: 'var(--font-code)',
-              fontSize: '0.72rem',
-              letterSpacing: '0.1em',
-              textTransform: 'uppercase',
-              color: 'var(--color-muted)',
-              marginBottom: '0.4rem',
-            }}>
-              Awaiting input
-            </p>
-            <p style={{ fontSize: '0.78rem', color: 'var(--color-muted)', opacity: 0.6 }}>
-              Findings will appear here after analysis
-            </p>
-          </div>
-          <div style={{ display: 'flex', gap: '1.5rem', marginTop: '0.5rem' }}>
-            {['A01 Injection', 'A03 XSS', 'A07 Auth'].map(tag => (
-              <span key={tag} style={{
-                fontFamily: 'var(--font-code)',
-                fontSize: '0.62rem',
-                color: 'var(--color-border)',
-                letterSpacing: '0.04em',
-              }}>
-                {tag}
-              </span>
-            ))}
-          </div>
-          <button
-            onClick={() => navigate('/results/demo')}
-            style={{
-              fontFamily: 'var(--font-code)',
-              fontSize: '0.7rem',
-              color: 'var(--color-accent)',
-              letterSpacing: '0.04em',
-              marginTop: '0.25rem',
-            }}
-          >
-            view a demo report →
-          </button>
-            </>
-          )}
-        </div>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleScan}
+                disabled={scanning}
+                aria-busy={scanning}
+              >
+                {scanning ? 'Analyzing…' : <>Analyze <ArrowRight size={15} /></>}
+              </button>
+              <p style={{ color: 'var(--ink-3)', fontSize: 12.5, textAlign: 'center' }}>
+                or press <kbd>⌘</kbd> <kbd>Enter</kbd>
+              </p>
+            </div>
+          </section>
+
+          <section className="panel" aria-live="polite">
+            <div className="panel-head"><strong>What it checks</strong><span className="end mono">OWASP 2021</span></div>
+            <OwaspChecklist progress={progress} />
+          </section>
+        </aside>
       </div>
     </div>
   )

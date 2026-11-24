@@ -1,8 +1,9 @@
+// CSS custom properties, so the palette lives in one place (index.css)
 export const SEVERITY_COLORS = {
-  Critical: '#EF4444',
-  High: '#F97316',
-  Medium: '#EAB308',
-  Low: '#22C55E',
+  Critical: 'var(--sev-critical)',
+  High: 'var(--sev-high)',
+  Medium: 'var(--sev-medium)',
+  Low: 'var(--sev-low)',
 }
 
 export const SEVERITY_ORDER = ['Critical', 'High', 'Medium', 'Low']
